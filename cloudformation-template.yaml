@@ -106,8 +106,14 @@ Metadata:
 Parameters:
   Ami:
     Type: String
-    Default: ami-013be31976ca2c322
+    Default: ami-0119aa4d67e59007c
     Description: For optimal performance, use the latest Amazon Linux AMI (HVM) available
+  AssignPublicIp:
+    Type: String
+    AllowedValues:
+    - true
+    - false
+    Default: true
   AsgMaxSize:
     Type: Number
     Default: 2
@@ -123,10 +129,10 @@ Parameters:
     Default: '2.5.0'
   PrometheusConfigurationPathS3:
     Type: String
-    Default: s3://netbears-prometheus/prometheus.yaml
+    Default: s3://dev-bigpandr/prometheus.yaml
   PrometheusAlertsPathS3:
     Type: String
-    Default: s3://netbears-prometheus/alert-rules.yaml
+    Default: s3://dev-bigpandr/alert-rules.yaml
   Environment:
     Type: String
     AllowedValues:
@@ -248,7 +254,10 @@ Conditions:
     Fn::Equals:
       - Ref: UseSsl
       - true
-
+  AssignPublicIp:
+    Fn::Equals:
+      - Ref: AssignPublicIp
+      - true
 Resources: 
   HostRole:
     Type: AWS::IAM::Role
@@ -348,6 +357,8 @@ Resources:
   LcPrometheus:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
+      AssociatePublicIpAddress:
+        Ref: AssignPublicIp
       ImageId:
         Ref: Ami
       EbsOptimized: true
@@ -624,6 +635,8 @@ Resources:
   LcThanosCompactor:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
+      AssociatePublicIpAddress:
+        Ref: AssignPublicIp
       ImageId:
         Ref: Ami
       EbsOptimized: true
@@ -787,6 +800,8 @@ Resources:
   LcThanosQuery:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
+      AssociatePublicIpAddress:
+        Ref: AssignPublicIp
       ImageId:
         Ref: Ami
       EbsOptimized: true
@@ -948,6 +963,8 @@ Resources:
   LcThanosStore:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
+      AssociatePublicIpAddress:
+        Ref: AssignPublicIp
       ImageId:
         Ref: Ami
       EbsOptimized: true
