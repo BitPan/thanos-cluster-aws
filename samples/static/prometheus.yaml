@@ -20,3 +20,11 @@ scrape_configs:
   static_configs:
   - targets:
     - localhost:9090
+- job_name: node_exporter_ec2
+  ec2_sd_configs:
+    - region: ap-southeast-2
+      port: 9100
+- job_name: wmi_exporter_ec2
+  ec2_sd_configs:
+    - region: ap-southeast-2
+      port: 9182

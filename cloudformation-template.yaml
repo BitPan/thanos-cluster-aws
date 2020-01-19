@@ -37,7 +37,6 @@ Metadata:
           default: Thanos configuration
         Parameters:
           - ThanosVersion
-          - StoreBucket
           - Exposure
           - HostedZoneId
           - DnsName
@@ -97,8 +96,6 @@ Metadata:
         default: The log level (default is info)
       ThanosVersion:
         default: The version of Thanos to install
-      StoreBucket:
-        default: The bucket name in which to store data
       S3DataRetention:
         default: The amount of data to keep in S3 (default is 30 days)
 
@@ -150,12 +147,13 @@ Parameters:
     Default: internet-facing
   HostedZoneId:
     Type: AWS::Route53::HostedZone::Id
+    Default: Z00843465IHWILKWFBQ0
   DnsName:
     Type: String
-    Default: thanos.aws.netbears.com
+    Default: thanos.internal.bigpandr.com
   ConsulEndpoint:
     Type: String
-    Default: consul.aws.netbears.com
+    Default: consul.internal.bigpandr.com
   UseConsulTemplateToGenerateFile:
     Type: String
     Default: 'false'
@@ -188,9 +186,6 @@ Parameters:
     Default: true
   CertificateArn:
     Type: String
-  StoreBucket:
-    Type: String
-    Default: netbears-prometheus-datastore
   ThanosVersion:
     Type: String
     Default: '0.1.0'
@@ -200,6 +195,7 @@ Parameters:
   InstanceType:
     Type: String
     AllowedValues:
+    - t3.medium
     - m5.large
     - m5.xlarge
     - m5.2xlarge
@@ -284,7 +280,7 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName:
-        Ref: StoreBucket 
+        Fn::Sub: ${AWS::StackName}-datastore
 
   Sg:
     Type: AWS::EC2::SecurityGroup
@@ -367,6 +363,7 @@ Resources:
         Ebs:
           VolumeType: gp2
           VolumeSize: 100
+      InstanceMonitoring: false
       InstanceType:
         Ref: InstanceType
       IamInstanceProfile:
@@ -482,7 +479,7 @@ Resources:
                       --prometheus.url="http://$ip:9090" \
                       --tsdb.path=/prometheus \
                       --s3.endpoint="s3.${AWS::Region}.amazonaws.com" \
-                      --s3.bucket="${StoreBucket}" \
+                      --s3.bucket="${AWS::StackName}-datastore" \
                       --grpc-address="0.0.0.0:19091" \
                       --http-address="0.0.0.0:19191" \
                       --cluster.address="0.0.0.0:19391" \
@@ -645,6 +642,7 @@ Resources:
         Ebs:
           VolumeType: gp2
           VolumeSize: 100
+      InstanceMonitoring: false
       InstanceType:
         Ref: InstanceType
       IamInstanceProfile:
@@ -716,7 +714,7 @@ Resources:
                 /usr/local/bin/thanos compact -w \
                     --data-dir="/thanos/compact" \
                     --s3.endpoint="s3.${AWS::Region}.amazonaws.com" \
-                    --s3.bucket="${StoreBucket}" \
+                    --s3.bucket="${AWS::StackName}-datastore" \
                     --debug.disable-downsampling \
                     --retention.resolution-raw="${S3DataRetention}" \
                     --retention.resolution-5m="${S3DataRetention}" \
@@ -810,6 +808,7 @@ Resources:
         Ebs:
           VolumeType: gp2
           VolumeSize: 100
+      InstanceMonitoring: false
       InstanceType:
         Ref: InstanceType
       IamInstanceProfile:
@@ -973,6 +972,7 @@ Resources:
         Ebs:
           VolumeType: gp2
           VolumeSize: 100
+      InstanceMonitoring: false
       InstanceType:
         Ref: InstanceType
       IamInstanceProfile:
@@ -1045,7 +1045,7 @@ Resources:
                 /usr/local/bin/thanos store \
                     --data-dir="/thanos/store" \
                     --s3.endpoint="s3.${AWS::Region}.amazonaws.com" \
-                    --s3.bucket="${StoreBucket}" \
+                    --s3.bucket="${AWS::StackName}-datastore" \
                     --cluster.address="0.0.0.0:19891" \
                     --cluster.advertise-address="$ip:19891" \
                     --cluster.peers="${DnsName}:19591" \
